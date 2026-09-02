@@ -1,0 +1,14 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+.Renviron
+*.gpkg
+*.pdf
+*.png
+*.jpg
+*.RData
+*.rda
+*.rds
+*.csv
+*.xlsx
