@@ -1,0 +1,257 @@
+---
+title: "Téléchargement et préparation des données CARHYCE"
+author: "DR Normandie - Service Régional Connaissance"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+output:
+  html_document:
+    highlight: pygments
+    theme: default
+    toc: true
+    css: css/ofb_theme_html.css
+---
+
+Ce script permet de télécharger les données CARHYCE depuis l'interface Web, puis de les importer sur R afin de créer une table commune.
+Cette table nous permettra ensuite de générer des fiches par station qui à partir desquelles nous ferons la mise en qualité des données.
+
+# 1. Procédure de téléchargement des données
+
+## A. Préparer l'environnement de travail
+
+L'ensemble du travail réalisé est fait sur Rstudio.   
+Pour commencer, il faut créer un dossier en local qui va accueillir notre projet .R nommé **"qualite_CARHYCE"**.  
+Dans ce dossier, créer les dossiers suivants:<br>
+- Data <br>
+- Output <br>
+- R <br>
+- Report <br>
+- Script <br>
+
+Dans le dossier "Data", créer les sous-dossiers "export_03", "export_04" et "clean_data".  
+
+## B. Téléchargement des données
+
+Se connecter à la base de données CARHYCE à l'adresse https://carhyce.eaufrance.fr/login.htm <br>
+Cliquer sur **"Accéder aux données"** dans la rubrique "Ressources et téléchargements".  
+
+Nos stations d'étude se situent dans les bassins Seine-Normandie et Loire-Bretagne. <br>
+Sur l'interface, l'export des données se fait par bassin, ainsi nous allons faire deux export.<br>
+
+### *Export bassin Seine-Normandie*
+
+Dans "Bassin administratif, sélectionner "03 - SEINE-NORMANDIE". <br>
+Puis dans Département, sélectionner "14","28","50","61", "76". <br>
+Cliquer sur **"Rechercher"** puis sur **"Télécharger les données au format CSV"**.<br>
+
+Le fichier vous a été envoyé par mail.<br>
+Télécharger le fichier .zip reçu puis extraire tous les fichiers qu'il contient à destination du dossier "export_03" créé précédemment.
+
+### *Export bassin Loire-Bretagne*
+
+Dans "Bassin administratif, sélectionner "04 - LOIRE-BRETAGNE". <br>
+Puis dans Département, sélectionner "14","27","28","50","61". <br>
+Cliquer sur **"Rechercher"** puis sur **"Télécharger les données au format CSV"**. <br>
+
+Le fichier vous a été envoyé par mail.<br>
+Télécharger le fichier .zip reçu puis extraire tous les fichiers qu'il contient à destination du dossier "export_04" créé précédemment.
+
+
+# 2. Import et traitement sur R 
+
+## A. Chargement des packages
+```{r chargement_packages, warning=FALSE, message=FALSE}
+library(tidyverse)
+library(readr)
+library(here)
+library(data.table)
+```
+
+## B. Chargement des fonctions
+
+```{r chargement_fonctions, message=FALSE}
+source(here("R","fun_nettoyer_tables.R"))
+source(here("R","fun_import_bassin.R"))
+```
+
+## C. Chargement des données CARHYCE
+
+Pour chaque bassin, les données sont rangées en 30 tables différentes.<br>
+Nous allons importer les données en 3 temps.<br>
+
+### 1) Import des données du bassin Seine-Normandie
+
+Pour les importer nous utilisons la fonction **import_bassin()** qui permet d'importer des tables .csv de deux manières différentes selon la structure des fichiers. Pour chaque table importée, la fonction affiche quelle méthode a été utilisée afin d'avoir un suivi et de pouvoir identifier les éventuels problèmes.
+
+```{r import_SN}
+SN <- import_bassin("../Data/export_03") 
+```
+
+
+### 2) Import des données du bassin Loire-Bretagne
+
+```{r import_LB}
+LB <- import_bassin("../Data/export_04")
+```
+
+
+### 3) Jointure des données des 2 bassins étudiés
+```{r jointure_bassins}
+#Faire une jointure de toutes les tables qui ont le même nom provenant des 
+#exports des bassins Seine-Normandie et Loire-Bretagne
+
+for(nom in names(SN)){
+#pour chaque nom de fichier différent, assigner le nom du fichier en question 
+#et faire une jointure des deux fichiers correspondants
+  assign(
+    nom,
+    bind_rows(
+      SN[[nom]],
+      LB[[nom]]
+    ) %>% 
+    distinct() #supprimer les doublons car une même station peut être présente dans les export des 2 bassins
+  )
+}
+```
+
+
+
+## D. Chargement des stations étudiées en Normandie
+```{r chargement_stations}
+#Référentiel CARHYCE Normandie disponible sur le réseau commun
+stations_nor <- sf::read_sf(
+  "\\\\ad.intra\\dfs\\COMMUNS\\REGIONS\\nor\\DR\\OFB\\SIG\\DR\\IG_METIER\\EAU\\QUALITATIF\\CARHYCE\\CARHYCE_stations.gpkg"
+) %>%
+  select("Dpt", "Code Sandre", "code PP HM", "Lib station") 
+
+#objet contenant les codes des stations étudiées
+#Il va nous permettre de filtrer les données
+mes_codes_stations <- unique(stations_nor$`Code Sandre`)
+```
+
+
+## E. Création de la table commune
+Afin de vérifier que l'import à fonctionné, on va d'abord créer une table contenant les informations des stations retenues. Cela permet de vérifier que les doublons ont bien été retirés. 
+```{r table_stations, message=FALSE}
+Table_stations_etude <- STATION_MESURE %>% 
+  rename(Code_station_SANDRE = SME_CD_STATION_MESURE_EAUX_SURFACE) %>% 
+  filter(Code_station_SANDRE %in% mes_codes_stations) %>% 
+  distinct()
+```
+
+```{r apercu_table_stations, message=FALSE, warning=FALSE, echo=FALSE}
+DT::datatable(
+  head(Table_stations_etude, 10),
+  options = list(
+    scrollX = TRUE,
+    pageLength = 5
+  ),
+  rownames = FALSE
+)
+```
+
+A présent nous pouvons mettre en forme nos données en effectuant les différentes jointures entre les tables qui nous intéressent. 
+```{r table_etude, warning=FALSE}
+Table_etude <- Table_stations_etude %>% 
+  left_join(TYPE_PROJECTION %>% 
+              select(TPR_CODE,TPR_LIBELLE),
+              by=c("SME_PROJ_STATION_MESURE_EAUX_SURFACE"="TPR_CODE")) %>% 
+  select(-SME_EST_SANDRE, 
+         -SME_PROJ_STATION_MESURE_EAUX_SURFACE) %>% 
+  
+  #JOINTURE 1 = ajouter le détail des opérations de chaque station
+  left_join(
+    OPERATION %>%
+      select(OPE_ID,
+             OPE_CODE,
+             OPE_VERSION_PROTOCOLE,
+             OPE_VERSION_PROTOCOLE_LIBELLE,
+             OPE_DATE_REALISATION,
+             OPE_DATE_PREVUE,
+             OPE_DEBIT_MESURE,
+             OPE_DEBIT_STATION_HYDRO,
+             OPE_LPBEV, #largeur plein bord évaluée
+             OPE_LMEV, #largeur mouillée évaluée
+             OPE_LR, #longueur réelle
+             OPE_LTH, #longueur théorique
+             OPE_DIP, #Distance inter point
+             OPE_PENTE_LIGNE_EAU,
+             OPE_PENTE_EVALUEE,
+             OPE_OBSERVATIONS,
+             OPE_PRES_HABITATS_MARGINAUX, #présence habitats marginaux
+             OPE_DESCRIPTION_HABITATS_MARGINAUX,
+             VAL_CODE, #statut de validation de l'opération
+             QUA_CODE, #niveau de qualification de l'opération
+             PPR_ID, #code du point de prélèvement
+             RME_CODE_SANDRE, #identifiant réseau de mesure
+             RME_NOM #libelle du réseau de mesure
+             ) %>% 
+      mutate(
+        across(
+          c(OPE_DEBIT_MESURE, 
+            OPE_DEBIT_STATION_HYDRO,
+            OPE_LPBEV, 
+            OPE_LMEV, 
+            OPE_LR, 
+            OPE_LTH, 
+            OPE_DIP,
+            OPE_PENTE_LIGNE_EAU,
+            OPE_PENTE_EVALUEE),
+          as.numeric),
+      #la variable OPE_CODE est une concaténation du code station, 
+      #point de prélèvement et numéro de l'opération
+      #on crée 3 variables à partir de celle-ci afin d'isoler le code station 
+      #et faciliter les jointures
+        Code_station_SANDRE   = substr(OPE_CODE, 1, 8),
+        code_pt_prelevement = substr(OPE_CODE, 9, 11),
+        num_operation        = substr(OPE_CODE, 12, 14)
+        ) %>%
+      left_join(QUALIFICATION %>% #ajouter les libelles de qualification correspondants
+                  select(QUA_CODE,QUA_LIBELLE),
+                by="QUA_CODE"),
+    by="Code_station_SANDRE") %>% 
+  
+  #JOINTURE 2 = Ajouter le détail des transects de chaque opération
+  left_join(
+    TRANSECT %>% 
+       mutate(
+         across(
+          c(TRA_LPB, 
+            TRA_L_MOUILLEE,
+            TRA_HPB),
+          as.numeric),
+        Code_station_SANDRE   = substr(TRA_CODE, 1, 8),
+        code_pt_prelevement = substr(TRA_CODE, 9, 11),
+        num_operation        = substr(TRA_CODE, 12, 14)
+        ),
+      by=c("Code_station_SANDRE" , 
+           "code_pt_prelevement",
+           "num_operation" ))%>% 
+  
+  #JOINTURE 3 = Ajouter le détail des points de chaque transect
+  left_join(POINT %>% 
+              select(-POI_CODE,
+                     -POI_EN_EAU)%>% 
+              left_join(
+                SUBSTRAT %>% 
+                  select(SUB_CODE,
+                         SUB_LIBELLE,
+                         SUB_DEFINITION),
+                  by="SUB_CODE"),
+            by=c("TRA_ID"="POI_TRA_ID")) 
+
+#Télécharger les données au format .rds
+saveRDS(Table_etude,
+        here("Data/clean_data", "BDD_etude.rds"))
+```
+
+
+```{r apercu_table_etude, message=FALSE, warning=FALSE, echo=FALSE}
+DT::datatable(
+    head(Table_etude, 5),
+  options = list(
+    scrollX = TRUE,
+    pageLength = 2
+  ),
+  rownames = FALSE
+)
+```
+
