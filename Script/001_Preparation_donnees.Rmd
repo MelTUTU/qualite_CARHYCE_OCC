@@ -7,6 +7,8 @@ output:
     highlight: pygments
     theme: default
     toc: true
+    toc_depth: 3
+    toc_float: true
     css: css/ofb_theme_html.css
 ---
 
@@ -26,7 +28,7 @@ Dans ce dossier, créer les dossiers suivants:<br>
 - Report <br>
 - Script <br>
 
-Dans le dossier "Data", créer les sous-dossiers "export_03", "export_04" et "clean_data".  
+Dans le dossier "Data", créer les sous-dossiers **"export_03"**, **"export_04"** et **"clean_data"**.  
 
 ## B. Téléchargement des données
 
@@ -133,6 +135,22 @@ Afin de vérifier que l'import à fonctionné, on va d'abord créer une table co
 ```{r table_stations, message=FALSE}
 Table_stations_etude <- STATION_MESURE %>% 
   rename(Code_station_SANDRE = SME_CD_STATION_MESURE_EAUX_SURFACE) %>% 
+  mutate( 
+    Libelle_bassin = recode(
+      substr(Code_station_SANDRE, 1, 2),
+      "03" = "Seine-Normandie",
+      "04" = "Loire-Bretagne",
+      .default = NA_character_),
+    Libelle_departement = recode(
+      SME_CD_DEPARTEMENT,
+      "14" = "Calvados",
+      "27" = "Eure",
+      "28" = "Eure-et-Loir",
+      "50" = "Manche",
+      "61" = "Orne",
+      "76" = "Seine-Maritime",
+      .default = NA_character_),
+    Region= "Normandie")%>% 
   filter(Code_station_SANDRE %in% mes_codes_stations) %>% 
   distinct()
 ```
@@ -149,8 +167,10 @@ DT::datatable(
 ```
 
 A présent nous pouvons mettre en forme nos données en effectuant les différentes jointures entre les tables qui nous intéressent. 
+
+### 1) Table contenant les données d'opérations, transects et points
 ```{r table_etude, warning=FALSE}
-Table_etude <- Table_stations_etude %>% 
+Table_ope_transect_point <- Table_stations_etude %>%
   left_join(TYPE_PROJECTION %>% 
               select(TPR_CODE,TPR_LIBELLE),
               by=c("SME_PROJ_STATION_MESURE_EAUX_SURFACE"="TPR_CODE")) %>% 
@@ -206,7 +226,10 @@ Table_etude <- Table_stations_etude %>%
         ) %>%
       left_join(QUALIFICATION %>% #ajouter les libelles de qualification correspondants
                   select(QUA_CODE,QUA_LIBELLE),
-                by="QUA_CODE"),
+                by="QUA_CODE")%>%
+      left_join(VALIDATION %>% #ajouter les libelles de qualification correspondants
+                  select(VAL_CODE,VAL_LIBELLE),
+                by="VAL_CODE"),
     by="Code_station_SANDRE") %>% 
   
   #JOINTURE 2 = Ajouter le détail des transects de chaque opération
@@ -237,16 +260,72 @@ Table_etude <- Table_stations_etude %>%
                          SUB_DEFINITION),
                   by="SUB_CODE"),
             by=c("TRA_ID"="POI_TRA_ID")) 
-
-#Télécharger les données au format .rds
-saveRDS(Table_etude,
-        here("Data/clean_data", "BDD_etude.rds"))
 ```
 
 
-```{r apercu_table_etude, message=FALSE, warning=FALSE, echo=FALSE}
+### 2) Table contenant les données d'opérations et granulométrie (wolman)
+```{r}
+Table_granulo <- Table_stations_etude %>%
+  left_join(TYPE_PROJECTION %>% 
+              select(TPR_CODE,TPR_LIBELLE),
+              by=c("SME_PROJ_STATION_MESURE_EAUX_SURFACE"="TPR_CODE")) %>% 
+  select(-SME_EST_SANDRE, 
+         -SME_PROJ_STATION_MESURE_EAUX_SURFACE) %>% 
+  
+  #JOINTURE 1 = ajouter le détail des opérations de chaque station
+  left_join(
+    OPERATION %>%
+      select(OPE_ID,
+             OPE_CODE,
+             OPE_VERSION_PROTOCOLE,
+             OPE_VERSION_PROTOCOLE_LIBELLE,
+             OPE_DATE_REALISATION,
+             OPE_DATE_PREVUE,
+             VAL_CODE, #statut de validation de l'opération
+             QUA_CODE, #niveau de qualification de l'opération
+             PPR_ID, #code du point de prélèvement
+             RME_CODE_SANDRE, #identifiant réseau de mesure
+             RME_NOM #libelle du réseau de mesure
+             ) %>% 
+      mutate(
+      #la variable OPE_CODE est une concaténation du code station, 
+      #point de prélèvement et numéro de l'opération
+      #on crée 3 variables à partir de celle-ci afin d'isoler le code station 
+      #et faciliter les jointures
+        Code_station_SANDRE   = substr(OPE_CODE, 1, 8),
+        code_pt_prelevement = substr(OPE_CODE, 9, 11),
+        num_operation        = substr(OPE_CODE, 12, 14)
+        ) %>%
+      left_join(QUALIFICATION %>% #ajouter les libelles de qualification correspondants
+                  select(QUA_CODE,QUA_LIBELLE),
+                by="QUA_CODE")%>%
+      left_join(VALIDATION %>% #ajouter les libelles de qualification correspondants
+                  select(VAL_CODE,VAL_LIBELLE),
+                by="VAL_CODE"),
+    by="Code_station_SANDRE") %>% 
+  
+  #Jointure 2 = ajout granulométrie (Wolman)
+  left_join( MESURE_GRANULOMETRIE,
+             by=c("OPE_ID"="MGR_OPE_ID"))
+
+```
+
+
+### 3) Télécharger les données sous forme de Rdata
+```{r}
+save(
+     Table_stations_etude,
+     Table_ope_transect_point,
+     Table_granulo,
+     file = "../Data/clean_data/CARHYCE_data.rda")
+```
+
+### 4) Aperçu des tables créées
+
+**Table_ope_transect_point:**
+```{r apercu_Table_ope_transect_point, message=FALSE, warning=FALSE, echo=FALSE}
 DT::datatable(
-    head(Table_etude, 5),
+    head(Table_ope_transect_point, 5),
   options = list(
     scrollX = TRUE,
     pageLength = 2
@@ -255,3 +334,15 @@ DT::datatable(
 )
 ```
 
+
+**Table_granulo:**
+```{r apercu_Table_granulo, message=FALSE, warning=FALSE, echo=FALSE}
+DT::datatable(
+    head(Table_granulo, 5),
+  options = list(
+    scrollX = TRUE,
+    pageLength = 2
+  ),
+  rownames = FALSE
+)
+```
