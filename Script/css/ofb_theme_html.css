@@ -93,3 +93,15 @@ code {
   font-weight: 600;
   background: #C4DB9B;
 }
+
+
+.alerte-rouge {
+  display: inline-block;
+  border: 1px solid #d9534f;
+  border-left: 6px solid #d9534f;
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 4px;
+}
