@@ -28,7 +28,7 @@ Dans ce dossier, créer les dossiers suivants:<br>
 - Report <br>
 - Script <br>
 
-Dans le dossier "Data", créer les sous-dossiers **"export_03"**, **"export_04"** et **"clean_data"**.  
+Dans le dossier **"Data"**, créer les sous-dossiers **"export_03"**, **"export_04"** et **"clean_data"**.  
 
 ## B. Téléchargement des données
 
@@ -65,6 +65,7 @@ library(tidyverse)
 library(readr)
 library(here)
 library(data.table)
+library(readxl)
 ```
 
 ## B. Chargement des fonctions
@@ -117,7 +118,7 @@ for(nom in names(SN)){
 
 
 ## D. Chargement des stations étudiées en Normandie
-```{r chargement_stations}
+```{r chargement_stations, warning=FALSE}
 #Référentiel CARHYCE Normandie disponible sur le réseau commun
 stations_nor <- sf::read_sf(
   "\\\\ad.intra\\dfs\\COMMUNS\\REGIONS\\nor\\DR\\OFB\\SIG\\DR\\IG_METIER\\EAU\\QUALITATIF\\CARHYCE\\CARHYCE_stations.gpkg"
@@ -129,10 +130,46 @@ stations_nor <- sf::read_sf(
 mes_codes_stations <- unique(stations_nor$`Code Sandre`)
 ```
 
+```{r warning=FALSE}
+#Dans le référentiel il y a des stations qui ne sont plus suivies, cet objet doit être modifié voir supprimé si besoin
+non_suivies <- c("03227475", #LE CHAUSSEY A BLANGY-LE-CHATEAU 2
+                "03231000", #LA DIVES A SAINT-SAMSON 1
+                "03236395", #L''ORNE A CAUMONT-SUR-ORNE 1
+                "03237617", #L''ORNE A CLINCHAMPS-SUR-ORNE 1
+                "03174000", #LA SEINE A POSES 2
+                "03178000", #L''EPTE A FOURGES 1
+                "03180100", #L''ANDELLE A RADEPONT 1
+                "03190300", #L''EURE A CROTH 2
+                "03191700", #L''EURE A CAILLY-SUR-EURE 1
+                "03254370", #LA DOUVE A PICAUVILLE 2
+                "03254770", #LE MERDERET A PICAUVILLE 1
+                "03255580", #LA TAUTE A SAINT-ANDRE-DE-BOHON 1
+                "03234650", #L''ORNE A SERANS 1
+                "04123755", #VARENNE à SAINT-BOMER-LES-FORGES
+                "03205000", #LA RANÇON A SAINT-WANDRILLE-RANCON 2
+                "03207228", #LE RUISSEAU DE LA VITARDIÈRE A HAUDRICOURT 1
+                "03217000", #LA DURDENT A PALUEL 1
+                "03218350", #LA LÉZARDE A EPOUVILLE 1
+                "04111000"  #SARTHE à ALENCON
+                )
+
+suiviCARHYCE_REFENTIEL <- read_excel("R:/Public/04_SRC/CARHYCE/000_Référentiel_CARHYCE/suiviCARHYCE_REFENTIEL.xlsx", 
+                                    skip = 1, n_max = 100) %>% 
+  select(code_sandre=`Code Sandre`) %>% 
+  filter(str_detect(code_sandre, "\\d"),
+         !(code_sandre %in% non_suivies))%>% 
+  distinct()
+
+#objet contenant les codes des stations étudiées
+#Il va nous permettre de filtrer les données
+mes_codes_stations <- unique(suiviCARHYCE_REFENTIEL$code_sandre)
+```
+
+
 
 ## E. Création de la table commune
 Afin de vérifier que l'import à fonctionné, on va d'abord créer une table contenant les informations des stations retenues. Cela permet de vérifier que les doublons ont bien été retirés. 
-```{r table_stations, message=FALSE}
+```{r table_stations, message=FALSE, warning=FALSE}
 Table_stations_etude <- STATION_MESURE %>% 
   rename(Code_station_SANDRE = SME_CD_STATION_MESURE_EAUX_SURFACE) %>% 
   mutate( 
@@ -168,8 +205,9 @@ DT::datatable(
 
 A présent nous pouvons mettre en forme nos données en effectuant les différentes jointures entre les tables qui nous intéressent. 
 
-### 1) Table contenant les données d'opérations, transects et points
-```{r table_etude, warning=FALSE}
+
+
+```{r warning=FALSE}
 Table_ope_transect_point <- Table_stations_etude %>%
   left_join(TYPE_PROJECTION %>% 
               select(TPR_CODE,TPR_LIBELLE),
@@ -198,6 +236,7 @@ Table_ope_transect_point <- Table_stations_etude %>%
              OPE_OBSERVATIONS,
              OPE_PRES_HABITATS_MARGINAUX, #présence habitats marginaux
              OPE_DESCRIPTION_HABITATS_MARGINAUX,
+             PRO_CODE, #statut de programmation
              VAL_CODE, #statut de validation de l'opération
              QUA_CODE, #niveau de qualification de l'opération
              PPR_ID, #code du point de prélèvement
@@ -224,13 +263,26 @@ Table_ope_transect_point <- Table_stations_etude %>%
         code_pt_prelevement = substr(OPE_CODE, 9, 11),
         num_operation        = substr(OPE_CODE, 12, 14)
         ) %>%
+      left_join(POINT_PRELEVEMENT %>% 
+                  select(SME_CD_STATION_MESURE_EAUX_SURFACE,
+                         PPR_CD_POINT_EAUX_SURF,
+                         PPR_COORD_X_AVAL_POINT_EAUX_SURF,
+                         PPR_COORD_Y_AVAL_POINT_EAUX_SURF),
+                b=c("Code_station_SANDRE" = "SME_CD_STATION_MESURE_EAUX_SURFACE",
+                    "code_pt_prelevement" = "PPR_CD_POINT_EAUX_SURF")) %>% 
+      left_join(PROGRAMMATION %>% #ajouter les libelles d'avancement correspondants
+                  select(PRO_CODE,PRO_LIBELLE),
+                by="PRO_CODE")%>%
       left_join(QUALIFICATION %>% #ajouter les libelles de qualification correspondants
                   select(QUA_CODE,QUA_LIBELLE),
                 by="QUA_CODE")%>%
       left_join(VALIDATION %>% #ajouter les libelles de qualification correspondants
                   select(VAL_CODE,VAL_LIBELLE),
-                by="VAL_CODE"),
+                by="VAL_CODE") %>% 
+      left_join(MESURE_COLMATAGE,
+                by=c("OPE_ID"="MCO_OPE_ID")),
     by="Code_station_SANDRE") %>% 
+        distinct() %>% 
   
   #JOINTURE 2 = Ajouter le détail des transects de chaque opération
   left_join(
@@ -244,15 +296,21 @@ Table_ope_transect_point <- Table_stations_etude %>%
         Code_station_SANDRE   = substr(TRA_CODE, 1, 8),
         code_pt_prelevement = substr(TRA_CODE, 9, 11),
         num_operation        = substr(TRA_CODE, 12, 14)
-        ),
+        ), 
       by=c("Code_station_SANDRE" , 
            "code_pt_prelevement",
-           "num_operation" ))%>% 
+           "num_operation" ))%>%
+  distinct() %>% 
   
   #JOINTURE 3 = Ajouter le détail des points de chaque transect
   left_join(POINT %>% 
               select(-POI_CODE,
-                     -POI_EN_EAU)%>% 
+                     -POI_EN_EAU)%>%
+              mutate(
+                across(
+                  c(POI_NUM, 
+                    POI_PROFONDEUR),
+                  as.numeric)) %>% 
               left_join(
                 SUBSTRAT %>% 
                   select(SUB_CODE,
@@ -262,9 +320,100 @@ Table_ope_transect_point <- Table_stations_etude %>%
             by=c("TRA_ID"="POI_TRA_ID")) 
 ```
 
+### 2) Table contenant les données d'opérations, transects et berges
+```{r table_etude, warning=FALSE}
+Table_transect_facies_berge <- Table_stations_etude %>%
+  left_join(TYPE_PROJECTION %>% 
+              select(TPR_CODE,TPR_LIBELLE),
+              by=c("SME_PROJ_STATION_MESURE_EAUX_SURFACE"="TPR_CODE")) %>% 
+  select(-SME_EST_SANDRE, 
+         -SME_PROJ_STATION_MESURE_EAUX_SURFACE) %>% 
+  
+  #JOINTURE 1 = ajouter le détail des opérations de chaque station
+  left_join(
+    OPERATION %>%
+      select(OPE_ID,
+             OPE_CODE,
+             OPE_VERSION_PROTOCOLE,
+             OPE_VERSION_PROTOCOLE_LIBELLE,
+             OPE_DATE_REALISATION,
+             OPE_DATE_PREVUE,
+             CRI_CODE_G, #continuité ripisylve berge Gauche
+             CRI_CODE_D, #continuité ripisylve berge Droite
+             ) %>% 
+      mutate(
+      #la variable OPE_CODE est une concaténation du code station, 
+      #point de prélèvement et numéro de l'opération
+      #on crée 3 variables à partir de celle-ci afin d'isoler le code station 
+      #et faciliter les jointures
+        Code_station_SANDRE   = substr(OPE_CODE, 1, 8),
+        code_pt_prelevement = substr(OPE_CODE, 9, 11),
+        num_operation        = substr(OPE_CODE, 12, 14)
+        ) %>%
+      left_join(CONTINUITE_RIPISYLVE %>% 
+                  select(CRI_CODE,
+                         CRI_LIBELLE) %>% 
+                  rename(CRI_CODE_D= CRI_CODE,
+                         CRI_LIBELLE_D=CRI_LIBELLE),
+                by="CRI_CODE_D")%>% 
+      left_join(CONTINUITE_RIPISYLVE %>% 
+                  select(CRI_CODE,
+                         CRI_LIBELLE) %>% 
+                  rename(CRI_CODE_G= CRI_CODE,
+                         CRI_LIBELLE_G=CRI_LIBELLE),
+                by="CRI_CODE_G"),
+    by="Code_station_SANDRE") %>% 
+  distinct() %>% 
+  
+  #JOINTURE 2 = Ajouter le détail des transects de chaque opération
+  left_join(
+    TRANSECT %>% 
+       mutate(
+         across(
+          c(TRA_LPB, 
+            TRA_L_MOUILLEE,
+            TRA_HPB),
+          as.numeric),
+        Code_station_SANDRE   = substr(TRA_CODE, 1, 8),
+        code_pt_prelevement = substr(TRA_CODE, 9, 11),
+        num_operation        = substr(TRA_CODE, 12, 14)
+        ) %>% 
+      left_join(FACIES_SIMPLIFIE %>% 
+                  select(FSI_CODE,FSI_LIBELLE),
+                by="FSI_CODE"
+                ),
+      by=c("Code_station_SANDRE" , 
+           "code_pt_prelevement",
+           "num_operation" ))%>%
+  left_join(BERGE %>% 
+                  select(BER_ID,
+                         BER_TRA_ID,
+                         BER_RIVE,
+                         SDO_CODE,
+                         ERI_CODE),
+                by=c("TRA_ID"="BER_TRA_ID")) %>% 
+  left_join(STRATE,
+            by=c("BER_ID"="STR_BER_ID")) %>% 
+  left_join(TYPE_STRATE,
+            by=c("STR_TST_ID"="TST_ID")) %>% 
+  left_join(STRATE_DOMINANTE %>% 
+                  select(SDO_CODE,
+                         SDO_LIBELLE),
+                by="SDO_CODE") %>% 
+  left_join(EPAISSEUR_VEGETATION %>% 
+                  select(eve_CODE,
+                         eve_LIBELLE),
+                by=c("STR_EVE_ID"="eve_CODE")) %>% 
+  left_join(EPAISSEUR_RIPISYLVE %>% 
+              select(ERI_CODE,
+                     ERI_LIBELLE),
+            by="ERI_CODE") %>% 
+  distinct() 
+```
 
-### 2) Table contenant les données d'opérations et granulométrie (wolman)
-```{r}
+                
+### 3) Table contenant les données d'opérations et granulométrie (wolman)
+```{r warning=FALSE}
 Table_granulo <- Table_stations_etude %>%
   left_join(TYPE_PROJECTION %>% 
               select(TPR_CODE,TPR_LIBELLE),
@@ -281,6 +430,7 @@ Table_granulo <- Table_stations_etude %>%
              OPE_VERSION_PROTOCOLE_LIBELLE,
              OPE_DATE_REALISATION,
              OPE_DATE_PREVUE,
+             PRO_CODE,
              VAL_CODE, #statut de validation de l'opération
              QUA_CODE, #niveau de qualification de l'opération
              PPR_ID, #code du point de prélèvement
@@ -316,6 +466,7 @@ Table_granulo <- Table_stations_etude %>%
 save(
      Table_stations_etude,
      Table_ope_transect_point,
+     Table_transect_facies_berge,
      Table_granulo,
      file = "../Data/clean_data/CARHYCE_data.rda")
 ```
@@ -334,6 +485,17 @@ DT::datatable(
 )
 ```
 
+**Table_transect_facies_berge:**
+```{r apercu_Table_transect_facies_berge, message=FALSE, warning=FALSE, echo=FALSE}
+DT::datatable(
+    head(Table_transect_facies_berge, 5),
+  options = list(
+    scrollX = TRUE,
+    pageLength = 2
+  ),
+  rownames = FALSE
+)
+```
 
 **Table_granulo:**
 ```{r apercu_Table_granulo, message=FALSE, warning=FALSE, echo=FALSE}
