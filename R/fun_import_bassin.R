@@ -4,7 +4,7 @@
 
 import_bassin <- function(dossier) {
   # Recherche de tous les fichiers .csv du dossier
-  fichiers <- list.files(
+  fichiers <- base::list.files(
     dossier,
     pattern = "\\.csv$",
     #pattern à repérer
@@ -12,23 +12,23 @@ import_bassin <- function(dossier) {
   )
   
   #création d'une liste nommée
-  setNames(
+  stats::setNames(
     #Lecture successive de chaque fichier .csv
-    lapply(fichiers, function(f) {
+    base::lapply(fichiers, function(f) {
       #nom du fichier sans le chemin, utilisé pour les messages affichés lors de l'import
-      nom_fichier <- basename(f)
+      nom_fichier <- base::basename(f)
       
       #tentative de lecture du fichier
-      table <- tryCatch({
+      table <- base::tryCatch({
         # Message indiquant la méthode de lecture utilisée
-        message("Lecture de ",
+        base::message("Lecture de ",
                 nom_fichier,
                 " : méthode avec encoding = 'Latin-1' et fill=TRUE")
         
         # Lecture du fichier CSV
         # fill = TRUE permet de compléter les lignes dont le
         # nombre de colonnes est inférieur à celui attendu
-        fread(
+        data.table::fread(
           f,
           sep = ";",
           dec = ".",
@@ -40,7 +40,7 @@ import_bassin <- function(dossier) {
       error = function(e) {
         # Si la lecture précédente échoue,
         # affichage du message d'erreur retourné par fread()
-        message(
+        base::message(
           "Lecture de ",
           nom_fichier,
           " : échec méthode 1 -> tentative avec fill = FALSE ",
@@ -50,7 +50,7 @@ import_bassin <- function(dossier) {
         # Nouvelle tentative de lecture sans fill = TRUE
         # Cette étape est nécessaire pour certains fichiers
         # contenant des guillemets mal interprétés par fread()
-        fread(
+        data.table::fread(
           f,
           sep = ";",
           dec = ".",
@@ -62,7 +62,9 @@ import_bassin <- function(dossier) {
       })
       # Suppression des éventuels espaces avant ou après
       # les noms de variables
-      setnames(table, trimws(names(table)))
+      data.table::setnames(
+        table, 
+        trimws(base::names(table)))
       
       # Suppression des colonnes générées automatiquement
       # par fread() (V1, V2, V3, ...)
@@ -78,6 +80,7 @@ import_bassin <- function(dossier) {
     # Exemple :
     # OPERATION.csv -> OPERATION
     # TRANSECT.csv -> TRANSECT
-    tools::file_path_sans_ext(basename(fichiers))
+    tools::file_path_sans_ext(
+      base::basename(fichiers))
   )
 }
