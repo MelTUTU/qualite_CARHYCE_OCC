@@ -1,6 +1,6 @@
 #' Créer le graphique présentant le largeurs plein bord et mouillées de chaque transect
 #'
-graph_LPB_LM_TRA <- function(data){
+graph_LPB_LM_tra <- function(data){
   
   data_filtre<-data %>% 
     dplyr::select(

@@ -54,7 +54,7 @@ prepare_data_sta <- function(data, id_station){
 }
 
 #' Fonction permettant de préparer les données pour la partie "historicité de prospection"
-prepare_data_jour <- function(data, id_station){
+prepare_data_jour_ope <- function(data, id_station){
   
   jour_ope <- data %>% 
     dplyr::filter(
@@ -207,4 +207,42 @@ prepare_table_granulo<-function(data, id_station){
         levels = base::unique(label_ope))
     )
   etude_granulo
+}
+
+prepare_table_colmatage <- function(data, id_station){
+  
+  table_colmatage <- data %>%
+    dplyr::filter(Code_station_SANDRE ==  id_station) %>% 
+    dplyr::select(Code_station_SANDRE,
+           OPE_ID,
+           OPE_CODE,
+           OPE_VERSION_PROTOCOLE_LIBELLE,
+           OPE_DATE_REALISATION,
+           code_pt_prelevement,
+           MCO_ID,
+           MCO_RADIER,
+           MCO_POSITION_LATERALE,
+           MCO_MESURE) %>% 
+    dplyr::distinct() %>% 
+    dplyr::mutate(OPE_DATE_REALISATION =base:: as.Date(OPE_DATE_REALISATION, 
+                                                       format = "%d/%m/%Y"),
+           OPE_ID_NUM= base::as.numeric(OPE_ID),  #créer une version numérique de la variable OPE_ID
+           label_ope = base::paste0("OPE: ", OPE_ID),
+           MCO_MESURE= base::as.numeric(MCO_MESURE)) %>% 
+    dplyr::arrange(OPE_ID_NUM)%>%  #mettre dans l'ordre croissant de numéro d'opération
+    dplyr::mutate(
+      OPE_ID = base::factor(
+        OPE_ID,
+        levels = base::unique(OPE_ID)),
+      code_pt_prelevement = base::factor(
+        code_pt_prelevement,
+        levels = base::unique(code_pt_prelevement)),
+      label_ope = base::factor(
+        label_ope,
+        levels = base::unique(label_ope)),
+      MCO_POSITION_LATERALE = base::factor(
+        MCO_POSITION_LATERALE,
+        levels = base::unique(MCO_POSITION_LATERALE))
+    )
+  table_colmatage
 }

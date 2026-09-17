@@ -1,6 +1,6 @@
 #'Créer un graphique permettant de visualiser le débit du cours d'eau par opération
 #'
-graph_debit<- function(data) {
+graph_debit_ope<- function(data) {
   
   #objet contenant le nombre de points de prélèvement
   n_PP <- dplyr::n_distinct(data$code_pt_prelevement)

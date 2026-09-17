@@ -1,13 +1,20 @@
-#'Créer un graphique permettant de visualiser la profondeur du premier point 
-#'de chaque transect.
-#'Si la profondeur est = 0 alors le point apparaît en rouge car cela traduit 
-#'une erreur de protocole.
-
-graph_point_1 <- function(data){
+#'Créer un graphique permettant de visualiser la hauteur plein bord de chaque transect
+#'
+graph_hpb_tra <- function(data){
   
-  #garder les valeurs correspondants au premier point de chaque transect
+  #arrangement des données
   data_filtre <- data %>% 
-    dplyr::filter(POI_NUM =="1") %>% 
+    dplyr::select(
+       Code_station_SANDRE, 
+       code_pt_prelevement,
+       OPE_ID,
+       OPE_DATE_REALISATION,
+       OPE_VERSION_PROTOCOLE_LIBELLE,
+       TRA_ID,
+       TRA_NUM,
+       TRA_HPB,
+       label,
+       OPE_ID_NUM)%>% 
     dplyr::distinct() %>% 
     dplyr::mutate(
       TRA_NUM= base::as.numeric(TRA_NUM)) %>% 
@@ -17,24 +24,17 @@ graph_point_1 <- function(data){
         label,
         levels = base::unique(label)))
   
-  #objet contenant le nombre de points de prélèvement
-  n_PP <- dplyr::n_distinct(data_filtre$code_pt_prelevement)
-  
-  #limites supérieures et inférieures de l'axe y
-  limit_sup_y <- max(data_filtre$POI_PROFONDEUR, na.rm = TRUE) +20
-  limit_inf_y <- min(data_filtre$POI_PROFONDEUR, na.rm = TRUE) -20
+  max_y <- base::max(data_filtre$TRA_HPB, na.rm = TRUE) +0.1
   
   #--- Graphique
-  p <- ggplot2::ggplot(data_filtre) +
+  p <- ggplot(data_filtre) +
     
     #Points interactifs correspondant aux valeurs de DIP
     ggiraph::geom_point_interactive(
       ggplot2::aes(
         x = TRA_NUM,
-        y = POI_PROFONDEUR,
-        fill = POI_PROFONDEUR == 0,
-        shape = POI_PROFONDEUR == 0,
-        tooltip = paste0(
+        y = TRA_HPB,
+        tooltip = base::paste0(
           "ope_id: ",
           OPE_ID,
           "<br>",
@@ -47,24 +47,16 @@ graph_point_1 <- function(data){
           "num_transect: ",
           TRA_NUM,
           "<br>",
-          "profondeur P1: ",
-          POI_PROFONDEUR,
+          "hauteur PB: ",
+          TRA_HPB,
           "<br>",
           "protocole: ",
           OPE_VERSION_PROTOCOLE_LIBELLE,
           "<br>")),
       size = 3,
-    )+
-    ggplot2::scale_fill_manual(
-      values = c(
-        "TRUE" = "red",
-        "FALSE" = "steelblue"),
-      guide = "none")+
-    ggplot2::scale_shape_manual(
-      values = c(
-        "TRUE" = 23,
-        "FALSE" = 21),
-      guide = "none"
+      shape=21,
+      fill="steelblue",
+      color="black"
     )+
     
     ggplot2::facet_wrap(~label, 
@@ -72,26 +64,25 @@ graph_point_1 <- function(data){
     
     #Mise en forme du graphique
     ggplot2::theme_bw() +
-    ggplot2::scale_y_continuous(limits = c(limit_inf_y, 
-                                           limit_sup_y)) +
+    ggplot2::scale_y_continuous(limits = c(0, max_y)) +
     ggplot2::scale_x_continuous(
       breaks = seq(
         from = 1,
-        to = max(data_filtre$TRA_NUM, na.rm = TRUE),
+        to = base::max(data_filtre$TRA_NUM, na.rm = TRUE),
         by = 2
       )
     )+
     ggplot2::labs(
-       title = "Profondeur du point n°1 de chaque transect, par opération", 
+       title = "Hauteur plein bord de chaque transect, par opération", 
        x="Numéro de transect",
-       y = "Profondeur du point n°1 (cm)")+
+       y = "Hauteur plein bord (m)")+
     ggplot2::theme(
       axis.title = ggplot2::element_text(size=11, face="bold"),
       plot.title = ggplot2::element_text(size = 12, face = "bold"),
       legend.title = ggplot2::element_text(size=11, face="bold"),
       strip.text = ggplot2::element_text(size = 8, face = "bold"))
   
-  
+  #afficher le graphique interactif
   ggiraph::girafe(ggobj = p,
                   height_svg = 4.5)
 }

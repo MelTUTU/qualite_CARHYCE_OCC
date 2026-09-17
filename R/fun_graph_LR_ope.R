@@ -1,21 +1,22 @@
-#'Créer le graphique présentant la pente de la ligne d'eau de chaque opération
+#' Créer un graphique permettant de visualiser la longueur de la station pour 
+#' chaque opération
 
-graph_pente<- function(data) {
+graph_LR_ope <- function(data) {
   
   #objet contenant le nombre de points de prélèvement
   n_PP <- dplyr::n_distinct(data$code_pt_prelevement)
   
   #objet contenant la hauteur de l'axe y
-  max_y <- max(data$OPE_PENTE_LIGNE_EAU, na.rm = TRUE)+2
+  max_y <- base::max(data$OPE_LR, na.rm = TRUE)+20
   
   #---Graphique
   p <- ggplot2::ggplot(data ) +
     
-    #points interactifs correspondants aux valeurs de pente
+    #points interactifs correspondants aux longueurs de station
     ggiraph::geom_point_interactive(
       ggplot2::aes(
         x = OPE_ID,
-        y = OPE_PENTE_LIGNE_EAU,
+        y = OPE_LR,
         tooltip = base::paste0(
           "ope_id: ",
           OPE_ID,
@@ -26,8 +27,8 @@ graph_pente<- function(data) {
           "ope_date: ",
           OPE_DATE_REALISATION,
           "<br>",
-          "valeur_pente: ",
-          OPE_PENTE_LIGNE_EAU,
+          "valeur_LR: ",
+          OPE_LR,
           "<br>",
           "protocole: ",
           OPE_VERSION_PROTOCOLE_LIBELLE,
@@ -42,13 +43,13 @@ graph_pente<- function(data) {
     ggplot2::scale_y_continuous(limits = c(0, max_y)) +
     ggplot2::theme_bw() +
     ggplot2::labs(
-       title = "Comparaison des pentes de ligne d'eau mesurées entre <br> opérations ", 
+       title = "Comparaison des longueurs de station entre opérations ", 
        x="Numéro d'opération",
-       y = "Pente (‰)")+
+       y = "Longueur (m)")+
     ggplot2::theme(
       axis.title = ggplot2::element_text(size=16, face="bold"),
       axis.text= ggplot2::element_text(size=14),
-      plot.title = ggtext::element_markdown(size = 16, face = "bold"),
+      plot.title = ggplot2::element_text(size = 16, face = "bold"),
       legend.title = ggplot2::element_text(size = 15, face = "bold"),
       strip.text = ggplot2::element_text(size = 14, face = "bold"),
       legend.text = ggplot2::element_text(size=14),
@@ -56,16 +57,16 @@ graph_pente<- function(data) {
     )
   
   
-  # #mise en forme conditionnelle s'il manque des valeurs de pente
-  if (base::any(base::is.na(data$OPE_PENTE_LIGNE_EAU))){
+  # #mise en forme conditionnelle s'il manque des valeurs de longueur
+  if (base::any(base::is.na(data$OPE_LR))){
     
     #identifier l'opération pour laquelle il manque la donnée
     ope_na <- data %>%
-      dplyr::filter(is.na(OPE_PENTE_LIGNE_EAU)) %>%
+      dplyr::filter(base::is.na(OPE_LR)) %>%
       dplyr::mutate(
         pos = base::match(OPE_ID, 
                           base::levels(
-                            base::factor(data$OPE_ID))),
+                          base::factor(data$OPE_ID))),
         xmin = pos - 0.2,
         xmax = pos + 0.2
       )%>%
@@ -75,7 +76,7 @@ graph_pente<- function(data) {
     base::cat(
       base::paste0(
         "<div class='alerte-rouge'>",
-        "⚠ Valeur de pente manquante pour l'opération : ",
+        "⚠ Valeur Longueur manquante pour l'opération : ",
         base::paste(ope_na$OPE_ID, collapse = ", "),
         "</div>"
       )
@@ -111,7 +112,7 @@ graph_pente<- function(data) {
           xmax = xmax,
           ymin = -Inf,
           ymax = Inf,
-          tooltip = paste0(
+          tooltip = base::paste0(
             "ope_id: ",
             OPE_ID,
             "<br>",
