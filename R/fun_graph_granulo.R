@@ -3,6 +3,13 @@
 
 graph_granulo <- function(data){
   
+  data <- data %>%
+    mutate(
+      label_ope = factor(
+        label_ope,
+        levels = unique(label_ope)
+      )
+    )
   p <- ggplot2::ggplot(
     dplyr::filter(data, MGR_MESURES > -1)) +
     ggiraph::geom_histogram_interactive(
@@ -29,7 +36,8 @@ graph_granulo <- function(data){
     )+
     ggplot2::facet_wrap(~label_ope, 
                ncol=2,
-               scales = "free")+
+               scales = "free",
+               drop = FALSE)+
     ggplot2::theme_bw()+
     ggplot2::labs(
        title="Distribution des mesures de granulométrie (Wolman) par opération",
@@ -49,11 +57,13 @@ graph_granulo <- function(data){
     annots <- data %>%
       dplyr::group_by( label_ope) %>%
       dplyr::summarise(
+        n_valides = sum(MGR_MESURES > -1, na.rm = TRUE),
         n_999 = base::sum(MGR_MESURES == -999, na.rm = TRUE),
         n_NA = base::sum(is.na(MGR_MESURES)),
         .groups = "drop"
       ) %>%
-      dplyr::filter(n_999 > 0 | n_NA > 0) %>%
+      dplyr::filter(n_valides > 0,,
+                    n_999 > 0 | n_NA > 0) %>%
       dplyr::mutate(
         x = Inf,
         y = Inf,
@@ -68,6 +78,7 @@ graph_granulo <- function(data){
                  base::paste0("⚠ ", n_NA, " valeur(s) NA"),
                  ""))
       )
+    
     
     p <- p +
       ggplot2::geom_label(
@@ -85,6 +96,27 @@ graph_granulo <- function(data){
         size=3
       )
   }
+  
+  ope_sans_granulo <- data %>%
+    dplyr::group_by(label_ope) %>%
+    dplyr::summarise(
+      toutes_NA = all(is.na(MGR_MESURES)),
+      .groups = "drop"
+    ) %>%
+    dplyr::filter(toutes_NA)
+  
+  if (nrow(ope_sans_granulo) > 0) {
+    
+    base::cat(
+      base::paste0(
+        "<div class='alerte-rouge'>",
+        "⚠ Aucune valeur de granulométrie pour : ",
+        base::paste(ope_sans_granulo$label_ope, collapse = ", "),
+        "</div>"
+      )
+    )
+  }
+  
   ggiraph::girafe(ggobj=p,
                   height_svg = 5)
 }

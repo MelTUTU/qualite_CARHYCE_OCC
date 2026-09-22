@@ -75,6 +75,7 @@ graph_LPB_LM_tra <- function(data){
         fill = "Largeur Plein Bord",
         tooltip = paste0(
           "ope_id: ", OPE_ID,
+          "<br>code_ppt: ",code_pt_prelevement,
           "<br>ope_date: ", OPE_DATE_REALISATION,
           "<br>valeur_lpb: ", TRA_LPB
         )
@@ -90,6 +91,7 @@ graph_LPB_LM_tra <- function(data){
         fill = "Largeur Mouillée",
         tooltip = paste0(
           "ope_id: ", OPE_ID,
+          "<br>code_ppt: ",code_pt_prelevement,
           "<br>ope_date: ", OPE_DATE_REALISATION,
           "<br>valeur_lm: ", TRA_L_MOUILLEE
         )

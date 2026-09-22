@@ -136,6 +136,7 @@ prepare_table_transects <- function(data,
        OPE_ID,
        OPE_DATE_REALISATION,
        OPE_VERSION_PROTOCOLE_LIBELLE,
+       OPE_DIP,
        TRA_ID,
        TRA_NUM,
        TRA_LPB,
@@ -150,9 +151,7 @@ prepare_table_transects <- function(data,
         base::as.Date(OPE_DATE_REALISATION, format = "%d/%m/%Y"),
       OPE_ID_NUM= base::as.numeric(OPE_ID),  #créer une version numérique de la variable OPE_ID
       label = base::paste0("OPE_ID: ", #les labels permettrons de renommer les facettes des graphiques
-                           OPE_ID, 
-                           " ; code_pp: ", 
-                           code_pt_prelevement)) %>% 
+                           OPE_ID)) %>% 
     dplyr::arrange(OPE_ID_NUM)%>%  #mettre dans l'ordre croissant de numéro d'opération
     #convertir les variables en facteurs ordonnés pour faciliter l'affichage dans les graphiques
     dplyr::mutate(
