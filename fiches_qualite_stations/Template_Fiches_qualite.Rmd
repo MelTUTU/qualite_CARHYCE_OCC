@@ -1,0 +1,271 @@
+---
+title: "Mise en qualité des données CARHYCE  - station `r params$code_station`"
+author: "DR Normandie - Service Régional Connaissance"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+output:
+  html_document:
+    highlight: pygments
+    theme: default
+    toc: false
+    css: css/ofb_theme_html.css
+params:
+  code_station: ""
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, 
+                      warning = FALSE,
+                      message = FALSE)
+```
+
+```{r Logo, echo = FALSE}
+if (knitr::is_html_output()) {
+  htmltools::img(
+    src = knitr::image_uri(here::here("fiches_qualite_stations/css", "logo_OFB_v2.png")),
+    style = 'position:absolute; top:0; right:0; width:180px;'
+  )
+}
+```
+
+```{r chargement_packages}
+library(tidyverse)
+library(here)
+library(gt)
+library(sf)
+library(lubridate)
+library(ggpattern)
+library(ggspatial)
+library(ggbreak)
+```
+
+```{r chargement_donnes}
+load(here("Data/clean_data", "CARHYCE_data.rda"))
+```
+
+```{r chargement_fonctions}
+fichiers_R <- list.files(
+  here::here("R"),
+  pattern = "\\.R$",
+  full.names = TRUE
+)
+
+invisible(lapply(fichiers_R, source))
+```
+
+> ⚠ **Préambule** :<br>
+> Les fiches de mise en qualité sont générées pour chaque station suivie en Normandie dans le cadre des protocoles CARHYCE.<br>
+> Elles permettent de visualiser les données brutes et de mettre en évidences les éventuelles absences de données, erreurs de saisies ou valeurs incohérentes.<br>
+> Les points de vigilance apparaissent sous forme de message rouge et/ou graphiquement.<br>
+> Les graphiques et cartes sont interactifs. <br>
+
+
+# 1. Informations générales de la station
+
+```{r preparation_donnees_sta}
+#préparation des données utilisées dans cette partie
+info_station <- prepare_data_sta(data=Table_ope_transect_point, 
+                                 id_station=params$code_station)
+```
+
+```{r info_et_carte, results='asis'}
+tab <- table_info_station(data=info_station)
+
+#si il y a plus d'un point de prélèvement, on affiche une carte à coté du tableau
+if(info_station$nombre_pt_prelevement > 1){
+
+  coord_ppt <- table_coord_ppt(
+    Table_ope_transect_point,
+    params$code_station
+  )
+
+  carte <- carte_station(coord_ppt)
+
+  htmltools::tagList(
+    htmltools::div(
+      style = "display:flex; gap:10px; align-items:flex-start;",
+      htmltools::div(
+        style = "width:40%;",
+        tab
+      ),
+      htmltools::div(
+        style = "width:60%;",
+        carte
+      )
+    )
+  )
+
+} else {
+#si un seul point de prélèvement, affichage du tableau seul
+  tab
+
+}
+```
+
+# 2. Informations par opérations
+
+## A. Historicité de prospection
+
+```{r table_info_ope}
+#mettre en forme la liste des opérations
+table_info_ope(data=Table_ope_transect_point,
+              id_station= params$code_station)
+```
+
+```{r table_jour_ope}
+jour_ope <- prepare_data_jour_ope(data= Table_ope_transect_point,
+                              id_station=params$code_station)
+```
+
+<br>
+```{r fig_jour_ope, results='asis', out.width="60%"}
+# appel de la fonction pour afficher le graphique
+graph_historique_ope(data=jour_ope)
+```
+
+
+
+## B. Mesures générales par opération
+
+### *Largeur Plein Bord et largeur mouillée par opération*
+
+Pour chaque opération, la largeur Plein Bord doit être supérieure à la largeur mouillée. Si ce n'est pas le cas, les points sont encadrés en rouge.
+
+
+```{r table_mesures}
+#créer la table qui sera utilisée dans cette partie
+table_mesures <- prepare_mesures_ope(data=Table_ope_transect_point,
+                                      id_station=params$code_station)
+```
+
+```{r plot_LPB_LM, results='asis'}
+# appel de la fonction pour afficher le graphique
+graph_LPB_LM_ope(data= table_mesures)
+```
+
+
+### *Longueur de la station et distance inter-point*
+
+Si une donnée est manquante pour une opération, un message apparaît et la zone correspondant à l'opération est hachurée. 
+```{r graph_lr_dip, results='asis'}
+lr_ope<- graph_LR_ope(data=table_mesures)
+dip_ope <-graph_DIP_ope(data= table_mesures)
+```
+
+```{r show_lr_dip, results='asis'}
+#afficher les deux graph côte à côte
+htmltools::tagList(
+  htmltools::div(
+    style = "display:flex;;gap:10px;",
+    htmltools::div(style = "width:50%;", lr_ope),
+    htmltools::div(style = "width:50%;", dip_ope)
+  )
+)
+```
+
+### *Pente et débit*
+```{r graph_pente_debit, results='asis'}
+pente_ope<-graph_pente_ope(data=table_mesures)
+debit_ope<-graph_debit_ope(data=table_mesures)
+```
+
+```{r show_pente_debit, results='asis'}
+#afficher les deux graph côte à côte
+htmltools::tagList(
+  htmltools::div(
+    style = "display:flex;gap:10px;",
+    htmltools::div(
+      style = "width:50%;",
+      pente_ope),
+    htmltools::div(
+      style = "width:50%;",
+      debit_ope))
+  )
+```
+
+# 3. Transects
+
+## A. Nombre de transect par opération
+
+Le nombre de transects attendu par station est de 15, mais un nombre de 13 transects est acceptable. Si ce nombre est inférieur à 13, alors la barre apparaîtra en rouge.
+
+```{r table_transects}
+table_transects <- prepare_table_transects(data=Table_ope_transect_point, 
+                                           id_station=params$code_station)
+```
+
+
+```{r graph_n_tra}
+# appel de la fonction pour afficher le graphique
+graph_n_transect(data=table_transects)
+```
+
+
+## B. LPB et LM par transect
+
+Pour chaque opération, la largeur Plein Bord doit être supérieure à la largeur mouillée. Si ce n'est pas le cas, les points sont encadrés en rouge.
+
+```{r plot_TRA_LPB_LM, results='asis'}
+graph_LPB_LM_tra(data=table_transects)
+```
+
+
+## C. Nombre de points par transect  
+
+Ce graphique permet de contrôler le nombre de points par transect.<br>
+Selon le protocole ce nombre est défini de la façon suivant:<br>
+Nombre théorique = largeur plein bord / distance inter-point <br>
+La valeur est considérée comme suspecte lorsque le nombre de point est < ou > à plus de 20% du nombre de points théorique.
+
+
+```{r plot_n_points_tra, results='asis'}
+graph_n_points_tra(data=table_transects)
+```
+
+
+## D. Profondeur des points par transect
+
+Cette figure permet de visualiser la profondeur des points de chaque transect.
+Si la profondeur du point 1 est égale à 0, alors le point apparaît en rouge.
+
+La ligne verte correspond à la hauteur plein bord du transect, il faut vérifier que la valeur absolue du premier point du transect, lorsqu'il est hors d'eau, soit inférieur à a valeur de la hauteur plein bord. 
+
+```{r plot_prof_point_tra}
+graph_prof_point(data=table_transects)
+```
+
+# 4. Granulométrie
+
+```{r data_granulo}
+etude_granulo <- prepare_table_granulo(Table_granulo,
+                                       params$code_station)
+```
+
+Cette figure permet de mettre en évidence la présence de NA et de "-999" correspondant à des absences de données. Si des NA ou "-999" sont détectés, des message apparaissent dans la facette concerné.
+
+**A noter** *(source: protocole CARHYCE)*:  
+- "En cas de radier de très petite taille, seuls cinquante éléments sont prélevés et mesurés"<br>
+- "Si un élément prélevé s'avère être du sable, noter par défaut une dimension de 0.5 millimètres".
+```{r plot_granulo, results='asis'}
+graph_granulo(etude_granulo)
+```
+
+
+# 5. Colmatage  
+
+La mesure du colmatage n'est plus faite depuis plusieurs années. Il est possible d'avoir dans les données des NA ou des -999, code utilisé pour signifier que la mesure n'a pas été faite.<br>
+Pour harmoniser il faudrait remplacer les NA par des -999.
+Cette figure permet donc de visualiser les valeurs de colmatage par opération.<br>
+Lorsqu'on a un NA, une zone hachurée en rouge apparaît sur le graphique, et lorsqu'il y a un -999, le point apparaît en rouge avec une forme triangulaire.
+
+```{r table_colmatage}
+table_colmatage <- prepare_table_colmatage(Table_ope_transect_point,
+                                           params$code_station)
+```
+
+
+```{r plot_colmatage}
+graph_colmatage_ope(table_colmatage)
+```
+
+
+
