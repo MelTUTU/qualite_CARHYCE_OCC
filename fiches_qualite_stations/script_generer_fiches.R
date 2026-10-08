@@ -3,9 +3,9 @@
 
 # lecture des stations
 
-stations_etude<-readRDS(here("Data/clean_data", 
+stations_etude<-readRDS(here::here("Data/clean_data", 
              "codes_stations_suivies.rds"))
-                                
+
 #Création des dossiers pour stocker les fichiers créés
 dir.create(
   "R:/Public/04_SRC/CARHYCE/CDD/Mise_en_qualite/Fiches_stations",
@@ -76,9 +76,10 @@ for (i in seq_along(stations_etude)) {
 
 
 # Supprimer les éventuels fichiers temporaires restants
-unlink("Script/figures", recursive = TRUE)
-unlink("Script/*.log")
-unlink("Script/*.aux")
-unlink("Script/*.tex")
-unlink("Script/*.out")
+unlink("fiches_qualite_stations/figures", recursive = TRUE)
+unlink("fiches_qualite_stations/rosm.cache", recursive = TRUE)
+unlink("fiches_qualite_stations/*.log")
+unlink("fiches_qualite_stations/*.aux")
+unlink("fiches_qualite_stations/*.tex")
+unlink("fiches_qualite_stations/*.out")
 

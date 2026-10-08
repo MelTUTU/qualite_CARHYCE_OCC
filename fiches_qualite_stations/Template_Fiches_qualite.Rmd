@@ -11,7 +11,7 @@ output:
 params:
   code_station: ""
 ---
-
+Auteurs: MOURGUES Julia, RICHARD Benoit
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, 
                       warning = FALSE,
@@ -67,7 +67,7 @@ info_station <- prepare_data_sta(data=Table_ope_transect_point,
                                  id_station=params$code_station)
 ```
 
-```{r info_et_carte, results='asis'}
+```{r info_et_carte, results='asis', message=FALSE, warning=FALSE}
 tab <- table_info_station(data=info_station)
 
 #si il y a plus d'un point de prélèvement, on affiche une carte à coté du tableau
@@ -199,6 +199,11 @@ table_transects <- prepare_table_transects(data=Table_ope_transect_point,
 graph_n_transect(data=table_transects)
 ```
 
+```{r remarques_transect}
+#mettre en forme la liste des opérations
+table_remarques_transect(data=table_transects,
+              id_station= params$code_station)
+```
 
 ## B. LPB et LM par transect
 
