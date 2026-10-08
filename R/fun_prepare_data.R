@@ -139,12 +139,15 @@ prepare_table_transects <- function(data,
        OPE_DIP,
        TRA_ID,
        TRA_NUM,
+       TRA_REMARQUES,
        TRA_LPB,
        TRA_L_MOUILLEE,
        TRA_HPB,
        POI_ID,
        POI_NUM,
-       POI_PROFONDEUR)%>% 
+       POI_PROFONDEUR,
+       SUB_CODE,
+       SUB_DEFINITION)%>% 
     dplyr::distinct() %>% 
     dplyr::mutate(
       OPE_DATE_REALISATION = 

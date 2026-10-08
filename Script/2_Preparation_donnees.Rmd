@@ -41,7 +41,7 @@ Sur l'interface, l'export des données se fait par bassin, ainsi nous allons fai
 ### *Export bassin Seine-Normandie*
 
 Dans "Bassin administratif, sélectionner "03 - SEINE-NORMANDIE". <br>
-Puis dans Département, sélectionner "14","28","50","61", "76". <br>
+Puis dans Département, sélectionner "14","27", 28","50","61", "76". <br>
 Cliquer sur **"Rechercher"** puis sur **"Télécharger les données au format CSV"**.<br>
 
 Le fichier vous a été envoyé par mail.<br>
@@ -50,7 +50,7 @@ Télécharger le fichier .zip reçu puis extraire tous les fichiers qu'il contie
 ### *Export bassin Loire-Bretagne*
 
 Dans "Bassin administratif, sélectionner "04 - LOIRE-BRETAGNE". <br>
-Puis dans Département, sélectionner "14","27","28","50","61". <br>
+Puis dans Département, sélectionner "14","28","50","61". <br>
 Cliquer sur **"Rechercher"** puis sur **"Télécharger les données au format CSV"**. <br>
 
 Le fichier vous a été envoyé par mail.<br>
@@ -118,17 +118,6 @@ for(nom in names(SN)){
 
 
 ## D. Chargement des stations étudiées en Normandie
-```{r chargement_stations, warning=FALSE}
-#Référentiel CARHYCE Normandie disponible sur le réseau commun
-stations_nor <- sf::read_sf(
-  "\\\\ad.intra\\dfs\\COMMUNS\\REGIONS\\nor\\DR\\OFB\\SIG\\DR\\IG_METIER\\EAU\\QUALITATIF\\CARHYCE\\CARHYCE_stations.gpkg"
-) %>%
-  select("Dpt", "Code Sandre", "code PP HM", "Lib station") 
-
-#objet contenant les codes des stations étudiées
-#Il va nous permettre de filtrer les données
-mes_codes_stations <- unique(stations_nor$`Code Sandre`)
-```
 
 ```{r warning=FALSE}
 #Dans le référentiel il y a des stations qui ne sont plus suivies, cet objet doit être modifié voir supprimé si besoin
@@ -138,9 +127,7 @@ non_suivies <- c("03227475", #LE CHAUSSEY A BLANGY-LE-CHATEAU 2
                 "03237617", #L''ORNE A CLINCHAMPS-SUR-ORNE 1
                 "03174000", #LA SEINE A POSES 2
                 "03178000", #L''EPTE A FOURGES 1
-                "03180100", #L''ANDELLE A RADEPONT 1
                 "03190300", #L''EURE A CROTH 2
-                "03191700", #L''EURE A CAILLY-SUR-EURE 1
                 "03254370", #LA DOUVE A PICAUVILLE 2
                 "03254770", #LE MERDERET A PICAUVILLE 1
                 "03255580", #LA TAUTE A SAINT-ANDRE-DE-BOHON 1
