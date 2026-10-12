@@ -9,7 +9,7 @@ output:
     toc: false
     css: css/ofb_theme_html.css
 params:
-  code_station: ""
+  code_station: "03271000"
 ---
 Auteurs: MOURGUES Julia, RICHARD Benoit
 ```{r setup, include=FALSE}
@@ -36,10 +36,6 @@ library(lubridate)
 library(ggpattern)
 library(ggspatial)
 library(ggbreak)
-```
-
-```{r chargement_donnes}
-load(here("Data/clean_data", "CARHYCE_data.rda"))
 ```
 
 ```{r chargement_fonctions}

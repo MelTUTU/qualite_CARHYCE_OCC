@@ -4,16 +4,20 @@
 # lecture des stations
 
 stations_etude<-readRDS(here::here("Data/clean_data", 
-             "codes_stations_suivies.rds"))
+            "codes_stations_suivies.rds"))
+
+# lecture des données
+base::load(here::here("Data/clean_data", "CARHYCE_data.rda"))
+
 
 #Création des dossiers pour stocker les fichiers créés
-dir.create(
+base::dir.create(
   "R:/Public/04_SRC/CARHYCE/CDD/Mise_en_qualite/Fiches_stations",
   recursive = TRUE,
   showWarnings = FALSE
 )
 
-dir.create(
+base::dir.create(
   "fiches_qualite_stations/figures", 
   showWarnings = FALSE) #permet de stocker les fichiers temporaires
 
@@ -22,21 +26,27 @@ dir.create(
 # Format html
 #-------------------------------------------------------------------------------
 
-for (i in seq_along(stations_etude)) {
+for (i in base::seq_along(stations_etude)) {
   
   id <- stations_etude[i]
+  
+  lib<- Table_stations_etude %>% 
+    filter(Code_station_SANDRE== id) %>% 
+    select(SME_LB_STATION_MESURE_EAUX_SURFACE)
 
-  message(
+  base::message(
     "Génération de la fiche ",
     i, "/",
     length(stations_etude),
     " - Station ",
-    id)
+    id,
+    " ",
+    lib)
 
   #boucle pour ne pas arrêter de générer l'ensemble des fiches si une erreur 
   #se produit pour une fiche
   
-  tryCatch(
+  base::tryCatch(
     
     {
       rmarkdown::render(
@@ -48,7 +58,7 @@ for (i in seq_along(stations_etude)) {
         output_dir =
           "R:/Public/04_SRC/CARHYCE/CDD/Mise_en_qualite/Fiches_stations",
         output_file =
-          paste0("Fiche-station-", id, ".html"),
+          base::paste0("Station-", id,"-",lib, ".html"),
         params = list(
           code_station = id
         ),
@@ -56,13 +66,13 @@ for (i in seq_along(stations_etude)) {
         quiet = TRUE
       )
       
-      message("Fiche créée : Fiche-station-", id, ".html")
+      base::message("Fiche créée : Fiche-station-", id, ".html")
       
     },
     
     error = function(e) {
       
-      message(
+      base::message(
         "ERREUR pour la station ",
         id,
         " : ",
@@ -76,10 +86,10 @@ for (i in seq_along(stations_etude)) {
 
 
 # Supprimer les éventuels fichiers temporaires restants
-unlink("fiches_qualite_stations/figures", recursive = TRUE)
-unlink("fiches_qualite_stations/rosm.cache", recursive = TRUE)
-unlink("fiches_qualite_stations/*.log")
-unlink("fiches_qualite_stations/*.aux")
-unlink("fiches_qualite_stations/*.tex")
-unlink("fiches_qualite_stations/*.out")
+base::unlink("fiches_qualite_stations/figures", recursive = TRUE)
+base::unlink("fiches_qualite_stations/rosm.cache", recursive = TRUE)
+base::unlink("fiches_qualite_stations/*.log")
+base::unlink("fiches_qualite_stations/*.aux")
+base::unlink("fiches_qualite_stations/*.tex")
+base::unlink("fiches_qualite_stations/*.out")
 
