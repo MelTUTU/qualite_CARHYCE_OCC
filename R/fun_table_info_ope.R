@@ -1,7 +1,7 @@
-# Sélection et arrangement des données
 
 table_info_ope <- function(data, id_station){
   
+  #arrangement des données
   info_ope <- data %>%
     dplyr::filter(
       Code_station_SANDRE == id_station) %>% 

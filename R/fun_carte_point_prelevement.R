@@ -9,7 +9,8 @@ carte_station <- function(data){
   map_station <- ggplot2::ggplot() +
     
     #fond de carte open street map
-    ggspatial::annotation_map_tile(type = "osm") + 
+    ggspatial::annotation_map_tile(type = "osm",
+                                   progress="none") + 
     
     #Points interactifs correspondant à la localisation des points de prélèvement
     ggiraph::geom_sf_interactive(
