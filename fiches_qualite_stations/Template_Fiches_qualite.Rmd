@@ -9,7 +9,7 @@ output:
     toc: false
     css: css/ofb_theme_html.css
 params:
-  code_station: "03271000"
+  code_station: ""
 ---
 Auteurs: MOURGUES Julia, RICHARD Benoit
 ```{r setup, include=FALSE}
@@ -176,6 +176,11 @@ htmltools::tagList(
       style = "width:50%;",
       debit_ope))
   )
+```
+
+
+```{r table_dispo_debit}
+dispo_debit(data=table_mesures)
 ```
 
 # 3. Transects
