@@ -12,23 +12,21 @@ library(writexl)
 ```
 
 # 1. Chargement des données
+
 ```{r}
-# stations_nor <- read_excel(
-#   "R:/Public/04_SRC/CARHYCE/000_Référentiel_CARHYCE/suiviCARHYCE_REFENTIEL.xlsx",
-#   skip=1,
-#   col_names = TRUE) %>% 
-#   select("Code Sandre", "code PP HM", "Lib station")
-# 
-# codes_stations <- unique(stations_nor$`Code Sandre`)
+# Référentiel des stations suivies en Normandie
+suiviCARHYCE_REFENTIEL <- read_excel("R:/Public/04_SRC/CARHYCE/000_Référentiel_CARHYCE/suiviCARHYCE_REFENTIEL.xlsx", 
+  skip = 1, 
+  n_max = 100) %>% 
+  select(code_sandre=`Code Sandre`) %>% 
+  filter(str_detect(code_sandre, "\\d"))%>% 
+  distinct()
+
+# Objet contenant les stations étudiées en Normandie
+mes_codes_stations <- unique(suiviCARHYCE_REFENTIEL$code_sandre)
 ```
 
 ```{r}
-#Référentiel CARHYCE Normandie disponible sur le réseau commun
-stations_nor <- sf::read_sf(
-  "\\\\ad.intra\\dfs\\COMMUNS\\REGIONS\\nor\\DR\\OFB\\SIG\\DR\\IG_METIER\\EAU\\QUALITATIF\\CARHYCE\\CARHYCE_stations.gpkg"
-) %>%
-  select("Dpt", "Code Sandre", "code PP HM", "Lib station")
-
 #Fichier de vérification provenant du national, disponible sur le réseau commun
 #Il y a 2 niveaux de verification:
 #niveau A: intrinsèque à chaque opération
@@ -49,11 +47,6 @@ carhyce_verif_niv_b_20260902 <- read_delim(
 ```
 
 # Arrangement des données: 
-
-## Objet contenant les stations étudiées en Normandie
-```{r}
-mes_codes_stations <- unique(stations_nor$`Code Sandre`)
-```
 
 ## Table Vérification de niveau A
 ```{r}
