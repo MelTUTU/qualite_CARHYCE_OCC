@@ -118,43 +118,19 @@ for(nom in names(SN)){
 
 
 ## D. Chargement des stations étudiées en Normandie
-
 ```{r warning=FALSE}
-#Dans le référentiel il y a des stations qui ne sont plus suivies, cet objet doit être modifié voir supprimé si besoin
-non_suivies <- c("03227475", #LE CHAUSSEY A BLANGY-LE-CHATEAU 2
-                "03231000", #LA DIVES A SAINT-SAMSON 1
-                "03236395", #L''ORNE A CAUMONT-SUR-ORNE 1
-                "03237617", #L''ORNE A CLINCHAMPS-SUR-ORNE 1
-                "03174000", #LA SEINE A POSES 2
-                "03178000", #L''EPTE A FOURGES 1
-                "03190300", #L''EURE A CROTH 2
-                "03254370", #LA DOUVE A PICAUVILLE 2
-                "03254770", #LE MERDERET A PICAUVILLE 1
-                "03255580", #LA TAUTE A SAINT-ANDRE-DE-BOHON 1
-                "03234650", #L''ORNE A SERANS 1
-                "04123755", #VARENNE à SAINT-BOMER-LES-FORGES
-                "03205000", #LA RANÇON A SAINT-WANDRILLE-RANCON 2
-                "03207228", #LE RUISSEAU DE LA VITARDIÈRE A HAUDRICOURT 1
-                "03217000", #LA DURDENT A PALUEL 1
-                "03218350", #LA LÉZARDE A EPOUVILLE 1
-                "04111000"  #SARTHE à ALENCON
-                )
-
 suiviCARHYCE_REFENTIEL <- read_excel("R:/Public/04_SRC/CARHYCE/000_Référentiel_CARHYCE/suiviCARHYCE_REFENTIEL.xlsx", 
                                     skip = 1, n_max = 100) %>% 
-  select(code_sandre=`Code Sandre`) %>% 
-  filter(str_detect(code_sandre, "\\d"),
-         !(code_sandre %in% non_suivies))%>% 
+  select(code_sandre=`Code Sandre`,
+         libelle_station =`Lib station`) %>% 
+  filter(str_detect(code_sandre, "\\d"))%>% 
   distinct()
 
-#objet contenant les codes des stations étudiées
-#Il va nous permettre de filtrer les données
 mes_codes_stations <- unique(suiviCARHYCE_REFENTIEL$code_sandre)
 
 saveRDS(mes_codes_stations,
         here("Data/clean_data", "codes_stations_suivies.rds"))
 ```
-
 
 
 ## E. Création de la table commune
