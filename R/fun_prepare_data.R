@@ -97,6 +97,7 @@ prepare_mesures_ope <- function(data, id_station){
        OPE_DATE_REALISATION,
        OPE_VERSION_PROTOCOLE_LIBELLE,
        OPE_DEBIT_MESURE,
+       OPE_DEBIT_STATION_HYDRO,
        OPE_LPBEV,
        OPE_LMEV,
        OPE_LR,
