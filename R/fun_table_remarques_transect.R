@@ -41,6 +41,15 @@ table_remarques_transect <- function(data, id_station){
       "ope_date",
       "transect",
       "remarques"
+    ),
+    caption = htmltools::tags$caption(
+      style = paste(
+        "caption-side: top;",
+        "text-align: center;",
+        "color: #000000;",
+        "font-size: 18px;", 
+        "font-weight: bold;"),
+      "Remarques concernant les transects"
     )
   )
 }
