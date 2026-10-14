@@ -121,8 +121,7 @@ for(nom in names(SN)){
 ```{r warning=FALSE}
 suiviCARHYCE_REFENTIEL <- read_excel("R:/Public/04_SRC/CARHYCE/000_Référentiel_CARHYCE/suiviCARHYCE_REFENTIEL.xlsx", 
                                     skip = 1, n_max = 100) %>% 
-  select(code_sandre=`Code Sandre`,
-         libelle_station =`Lib station`) %>% 
+  select(code_sandre=`Code Sandre`) %>% 
   filter(str_detect(code_sandre, "\\d"))%>% 
   distinct()
 
@@ -156,6 +155,8 @@ Table_stations_etude <- STATION_MESURE %>%
     Region= "Normandie")%>% 
   filter(Code_station_SANDRE %in% mes_codes_stations) %>% 
   distinct()
+
+readr::write_csv(Table_stations_etude, "../Data/clean_data/coord_stations.csv")
 ```
 
 ```{r apercu_table_stations, message=FALSE, warning=FALSE, echo=FALSE}
