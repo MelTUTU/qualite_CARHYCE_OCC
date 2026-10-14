@@ -10,8 +10,8 @@ Ces fiches permettent de mettre en évidence les éventuelles erreurs de
 saisie, données aberrantes et points de vigilance.
 
 L'ensemble de ces scripts et fonctions peut être adapté pour des territoires différents. 
-our cela, il suffit de modifier le fichier d'entrée contenant les stations étudiées (ainsi que son chemin d'accès)
-et aussi d'adapter le chemin d'accès du dossier dans lequel seront gérérées les fiches.  
+Pour cela, il suffit de modifier le fichier d'entrée contenant les stations étudiées (ainsi que son chemin d'accès)
+et aussi d'adapter le chemin d'accès du dossier dans lequel seront générées les fiches.  
 
 ## <span style='color:#2D0084;'> 1. Effectuer les vérifications de niveau A indiquées par le national</span>
 
