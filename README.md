@@ -1,11 +1,11 @@
 # **Mise en qualité des données CARHYCE**
 
-Ce dépôt contient les fonctions et scripts R Markdown utilisés par l'OFB Normandie 
+Ce dépôt contient les fonctions et scripts R Markdown utilisés par l'OFB Normandie (Service Régional Connaissance) 
 pour la mise en qualité des données **CARHYCE**.
 
 
-Il permet d'aboutir à la création de fiches par stations générées à partir des 
-données brutes télécharger sur la base de données CARHYCE (https://carhyce.eaufrance.fr/). 
+Il permet d'aboutir à la création de fiches par station générées à partir des 
+données brutes téléchargées sur la base de données CARHYCE (https://carhyce.eaufrance.fr/). 
 Ces fiches permettent de mettre en évidence les éventuelles erreurs de 
 saisie, données aberrantes et points de vigilance.
 
