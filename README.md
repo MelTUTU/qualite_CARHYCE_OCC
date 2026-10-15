@@ -34,7 +34,7 @@ La procédure d'export et de stockage des données CARHYCE est présentée en pr
 partie du script **2_Preparation_donnees.html**.
 
 ⚠ Si les bassins étudiés ne sont pas Seine-Normandie et Loire-Bretagne, 
-il faut penser à adapter la procédure.
+il faut penser à adapter la procédure.  
 ⚠ S'il y a plus de deux bassins, il faut compléter le script en important les 
 bassins supplémentaires et ajouter le nom des tables dans la boucle permettant 
 la jointure des données.
@@ -52,7 +52,8 @@ le dossier **Data/clean_data/** .
 Pour générer les fiches de mise en qualité, il faut se rendre dans le dossier 
 **fiches_qualite_stations** et faire tourner le script **script_generer_fiches.R**.
 
-Ce script fonctionne à partir des tables créées dans la partie précédente. 
+Ce script fonctionne à partir des tables créées dans la partie précédente.  
+
 ⚠ Penser à adapter le chemin d'accès du dossier dans lequel seront générées les fiches.
 
 Dans ces fiches, nous retrouvons un ensembles de cartes, tableaux et graphiques 
