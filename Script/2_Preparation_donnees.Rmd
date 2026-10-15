@@ -159,13 +159,18 @@ Table_stations_etude <- STATION_MESURE %>%
 ```
 
 ```{r}
+#Enregistrer les coordonnées de nos stations sous forme de Geopackage
 stations_CARHYCE_sf <- st_as_sf(
   Table_stations_etude,
-  coords = c("X", "Y"),
+  coords = c("SME_COORD_X_STATION_MESURE_EAUX_SURFACE", "SME_COORD_Y_STATION_MESURE_EAUX_SURFACE"),
   crs = 2154
 )
 
-readr::write_csv(Table_stations_etude, "../Data/clean_data/coord_stations.csv")
+st_write(
+  stations_CARHYCE_sf,
+  "../Data/clean_data/stations_CARHYCE.gpkg",
+  delete_dsn = TRUE
+)
 ```
 
 ```{r apercu_table_stations, message=FALSE, warning=FALSE, echo=FALSE}
