@@ -9,11 +9,15 @@ données brutes téléchargées sur la base de données CARHYCE (https://carhyce
 Ces fiches permettent de mettre en évidence les éventuelles erreurs de 
 saisie, données aberrantes et points de vigilance.
 
-L'ensemble de ces scripts et fonctions peut être adapté pour des territoires différents. 
-Pour cela, il suffit de modifier le fichier d'entrée contenant les stations étudiées (ainsi que son chemin d'accès)
-et aussi d'adapter le chemin d'accès du dossier dans lequel seront générées les fiches.  
+Plusieurs packages sont utilisés pour ce projet, et sont réinstallés à l'aide du R package `renv`.
 
-## <span style='color:#2D0084;'> 1. Effectuer les vérifications de niveau A indiquées par le national</span>
+```r
+# Au besoin, pour restaurer l'installation des packages
+renv::restore()
+```
+
+
+## 1. Effectuer les vérifications de niveau A indiquées par le national
 
 Pour cette partie il faut suivre le script **1_Verification_national.Rmd**. 
 Cette partie est indépendante du reste de la procédure de mise en qualité et 
@@ -25,23 +29,33 @@ vérifier le chemin d'accès du fichier.
 Le script permet de filtrer le tableau afin de garder seulement les stations de 
 Normandie.
 
-## <span style='color:#2D0084;'> 2. Créer les tables de travail</span>
+## 2. Créer les tables de travail
 La procédure d'export et de stockage des données CARHYCE est présentée en première 
 partie du script **2_Preparation_donnees.html**.
+
+⚠ Si les bassins étudiés ne sont pas Seine-Normandie et Loire-Bretagne, 
+il faut penser à adapter la procédure.
+⚠ S'il y a plus de deux bassins, il faut compléter le script en important les 
+bassins supplémentaires et ajouter le nom des tables dans la boucle permettant 
+la jointure des données.
+
 Ce script permet ensuite de construire les tables qui seront utilisées pour la 
 création des fiches station. 
 
-Pour ce faire, il est nécessaire d'avoir un fichier contenant au moins les codes des stations suivies dans la région.
+Pour ce faire, il est nécessaire d'avoir un fichier contenant au moins les codes 
+des stations suivies dans la région.
 
 Une fois créées, ces tables sont enregistrées dans 
 le dossier **Data/clean_data/** .
 
-## <span style='color:#2D0084;'> 3. Générer les fiches de mise en qualité</span>
+## 3. Générer les fiches de mise en qualité
 Pour générer les fiches de mise en qualité, il faut se rendre dans le dossier 
 **fiches_qualite_stations** et faire tourner le script **script_generer_fiches.R**.
 
 Ce script fonctionne à partir des tables créées dans la partie précédente. 
+⚠ Penser à adapter le chemin d'accès du dossier dans lequel seront générées les fiches.
 
 Dans ces fiches, nous retrouvons un ensembles de cartes, tableaux et graphiques 
 interactifs qui permettent d'identifier les problèmes présents dans les données 
 brutes.
+
