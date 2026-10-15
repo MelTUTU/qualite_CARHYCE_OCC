@@ -66,6 +66,7 @@ library(readr)
 library(here)
 library(data.table)
 library(readxl)
+library(sf)
 ```
 
 ## B. Chargement des fonctions
@@ -155,6 +156,14 @@ Table_stations_etude <- STATION_MESURE %>%
     Region= "Normandie")%>% 
   filter(Code_station_SANDRE %in% mes_codes_stations) %>% 
   distinct()
+```
+
+```{r}
+stations_CARHYCE_sf <- st_as_sf(
+  Table_stations_etude,
+  coords = c("X", "Y"),
+  crs = 2154
+)
 
 readr::write_csv(Table_stations_etude, "../Data/clean_data/coord_stations.csv")
 ```
