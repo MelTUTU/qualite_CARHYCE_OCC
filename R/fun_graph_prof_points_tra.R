@@ -19,7 +19,7 @@ graph_prof_point<- function(data){
       #création d'une légende pour identifier si la profondeur du point 1 est égale à -HPB
       legende= case_when(
       POI_NUM=="1"& POI_PROFONDEUR == 0 ~ "Profondeur 0",
-      POI_NUM=="1"& POI_PROFONDEUR ==TRA_HPB_cm_inv ~"Profondeur = HPB",
+      POI_NUM=="1"& POI_PROFONDEUR ==TRA_HPB_cm_inv ~"Profondeur = -HPB",
       TRUE~ "OK"))
   
   #--- Graphique
