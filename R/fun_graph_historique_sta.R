@@ -39,8 +39,9 @@ graph_historique_ope <- function(data) {
       duree_ans = base::round(
         base::as.numeric(date_fin - date_debut) / 365.25, 1), #arrondir au dixième
       couleur = dplyr::case_when(
-        duree_ans <= 6 ~ "OK Protocole",
-        duree_ans <= 7 ~ "En retard, acceptable protocole",
+        duree_ans <4.6 ~ "En avance protocole",
+        duree_ans <= 6.6 ~ "OK Protocole",
+        duree_ans <= 7.6 ~ "En retard, acceptable protocole",
         TRUE ~ "En retard, hors protocole"
       )
     )
@@ -62,6 +63,7 @@ graph_historique_ope <- function(data) {
       alpha = 0.4)+
     ggplot2::scale_fill_manual(
       values = c(
+        "En avance protocole" = "grey",
         "OK Protocole" = "#7FC97F",
         "En retard, acceptable protocole" = "#FDB462",
         "En retard, hors protocole" = "#FB8072"),
