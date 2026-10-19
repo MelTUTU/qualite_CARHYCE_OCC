@@ -29,7 +29,12 @@ graph_n_transect<- function(data){
         levels = base::unique(OPE_ID)),
       code_pt_prelevement = base::factor(
         code_pt_prelevement,
-        levels = base::unique(code_pt_prelevement))
+        levels = base::unique(code_pt_prelevement)),
+      lib_n_tra = case_when(
+        n_tra <13 ~ "Nombre de transects insuffisant",
+        n_tra <15 ~"Nombre de transects accepté mais évaluation déradée",
+        TRUE ~"Nombre de transects OK"
+      )
     )
   
   #objet contenant le nombr de points de prélèvement
@@ -44,7 +49,7 @@ graph_n_transect<- function(data){
       ggplot2::aes(
         x = OPE_ID,
         y = n_tra,
-        fill = n_tra >=13 ,
+        fill = lib_n_tra ,
         tooltip = base::paste0(
           "ope_id: ",
           OPE_ID,
@@ -66,9 +71,9 @@ graph_n_transect<- function(data){
     )+
     ggplot2::scale_fill_manual(
       values = c(
-        "TRUE" = "steelblue",
-        "FALSE" = "red"),
-      guide = "none")+
+        "Nombre de transects OK" = "steelblue",
+        "Nombre de transects accepté mais évaluation déradée" = "orange",
+        "Nombre de transects insuffisant" = "red"))+
     
     #mise en forme du graphique
     ggplot2::scale_y_continuous(limits = c(0, max_y)) +
@@ -76,7 +81,8 @@ graph_n_transect<- function(data){
     ggplot2::labs(
          title = "Comparaison du nombre de transects entre opérations ", 
          x="Numéro opération",
-         y = "Nombre de transects")+
+         y = "Nombre de transects",
+         fill="Légende")+
     ggplot2::theme(
       axis.title = ggplot2::element_text(size=8, face="bold"),
       axis.text= ggplot2::element_text(size=7),
