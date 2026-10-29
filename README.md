@@ -1,3 +1,5 @@
+Fork du travail de Julia en Normandie, que je vais tenter de décliner pour la DR OCC ! 
+
 # **Mise en qualité des données CARHYCE**
 
 Ce dépôt contient les fonctions et scripts R Markdown utilisés par l'OFB Normandie (Service Régional Connaissance) 
